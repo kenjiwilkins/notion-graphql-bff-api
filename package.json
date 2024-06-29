@@ -1,0 +1,24 @@
+{
+  "name": "notion-graphql-bff-api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --config nodemon.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "apollo-server": "^3.13.0",
+    "dotenv": "^16.4.5",
+    "graphql": "^16.9.0",
+    "nodemon": "^3.1.4"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}
