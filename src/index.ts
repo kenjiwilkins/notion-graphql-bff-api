@@ -13,11 +13,17 @@ async function wait(ms: number) {
 type Book = BookResponse;
 
 const typeDefs = gql`
+  enum BookReadStatus {
+    Reading
+    Read
+    unread
+  }
   type Query {
     sessions: [Session]
     hello: String
     wait(ms: Int!): String
     book: [Book]
+    bookById(id: ID!): Book
   }
   type Session {
     id: ID!
@@ -37,7 +43,9 @@ const typeDefs = gql`
   type Book {
     id: ID!
     title: String!
-    status: String
+    status: BookReadStatus
+    authorName: String
+    authorId: String
   }
 `;
 
@@ -60,6 +68,15 @@ const resolvers = {
       try {
         const books = await getBooksFromCache();
         return books;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    bookById: async (_: any, { id }: { id: string }) => {
+      try {
+        const books = await getBooksFromCache();
+        const book = books.find((book) => book.id === id);
+        return book;
       } catch (error) {
         console.error(error);
       }
