@@ -23,7 +23,7 @@ const typeDefs = gql`
     hello: String
     wait(ms: Int!): String
     book: [Book]
-    bookById(id: ID!): Book
+    bookById(id: ID!): BookOrError
   }
   type Session {
     id: ID!
@@ -47,6 +47,11 @@ const typeDefs = gql`
     authorName: String
     authorId: String
   }
+  type Error {
+    message: String!
+    code: Int!
+  }
+  union BookOrError = Book | Error
 `;
 
 // A map of functions which return data for the schema.
@@ -76,9 +81,29 @@ const resolvers = {
       try {
         const books = await getBooksFromCache();
         const book = books.find((book) => book.id === id);
+        if (!book) {
+          console.log(`Book not found with id: ${id}`);
+          return {
+            message: "Book not found",
+            code: 404,
+          };
+        }
         return book;
       } catch (error) {
         console.error(error);
+        return {
+          message: "Internal server error",
+          code: 500,
+        };
+      }
+    },
+  },
+  BookOrError: {
+    __resolveType(obj: any) {
+      if (obj.message) {
+        return "Error";
+      } else {
+        return "Book";
       }
     },
   },
