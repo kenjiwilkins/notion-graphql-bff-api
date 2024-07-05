@@ -1,16 +1,13 @@
 import "dotenv/config";
 
 import { ApolloServer, gql } from "apollo-server";
-import { getBooks } from "./apis";
+import { getRecipeTags } from "./apis";
 import sessions from "./sessions.json";
-import { BookResponse } from "./types";
-import { getBooksFromCache } from "./cache";
+import { getBooksFromCache, getRecipeTagsFromCache } from "./cache";
 
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-type Book = BookResponse;
 
 const typeDefs = gql`
   enum BookReadStatus {
@@ -23,6 +20,8 @@ const typeDefs = gql`
     hello: String
     wait(ms: Int!): String
     book: [Book]
+    recipeTags: [RecipeTag]
+    recipeTagByTitle(title: String!): RecipeTagsOrError
     bookById(id: ID!): BookOrError
   }
   type Session {
@@ -47,17 +46,22 @@ const typeDefs = gql`
     authorName: String
     authorId: String
   }
+  type RecipeTag {
+    id: ID!
+    title: String!
+  }
   type Error {
     message: String!
     code: Int!
   }
   union BookOrError = Book | Error
+  union RecipeTagsOrError = RecipeTag | Error
 `;
 
 // A map of functions which return data for the schema.
 const resolvers = {
   Query: {
-    hello: () => {
+    hello: async () => {
       const now = new Date();
       return `Hello world! at ${now.toLocaleDateString()}: ${now.toLocaleTimeString()}`;
     },
@@ -68,6 +72,18 @@ const resolvers = {
       const now = new Date();
       await wait(ms);
       return `waited for ${ms} ms from ${now.toLocaleDateString()}: ${now.toLocaleTimeString()} to ${new Date().toLocaleDateString()}: ${new Date().toLocaleTimeString()}`;
+    },
+    recipeTags: async () => {
+      try {
+        const recipeTags = await getRecipeTagsFromCache();
+        return recipeTags;
+      } catch (error) {
+        console.error(error);
+        return {
+          message: "Internal server error",
+          code: 500,
+        };
+      }
     },
     book: async () => {
       try {
@@ -104,6 +120,15 @@ const resolvers = {
         return "Error";
       } else {
         return "Book";
+      }
+    },
+  },
+  RecipeTagsOrError: {
+    __resolveType(obj: any) {
+      if (obj.message) {
+        return "Error";
+      } else {
+        return "RecipeTag";
       }
     },
   },
