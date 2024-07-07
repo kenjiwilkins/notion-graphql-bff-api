@@ -48,12 +48,28 @@ export async function getRecipeTags(config: {
       database_id: process.env.NOTION_RECIPE_TAG_ID || "",
       page_size: config.amount || 10,
       start_cursor: config.start ? config.start : undefined,
-      // sorts: [
-      //   {
-      //     property: "updated_at",
-      //     direction: "descending",
-      //   },
-      // ],
+    });
+    return Promise.resolve(response);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
+export async function getRecipesByTag(id: string) {
+  try {
+    const notion = getNotionClient();
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_RECIPE_ID || "",
+      filter: {
+        and: [
+          {
+            property: "Tags",
+            relation: {
+              contains: id,
+            },
+          },
+        ],
+      },
     });
     return Promise.resolve(response);
   } catch (error) {

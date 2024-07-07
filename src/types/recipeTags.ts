@@ -12,6 +12,12 @@ export interface RecipeTagResponseProperties {
       }
     ];
   };
+  related_recipes: {
+    relation: {
+      id: string;
+      title: string;
+    }[];
+  };
 }
 
 export interface RecipeTagResponse {

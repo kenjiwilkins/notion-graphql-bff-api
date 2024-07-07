@@ -15,13 +15,14 @@ let cache: RecipeTagsCache | null = null;
 const formatRecipeTagsResponse = (
   response: RecipeTagsResponse
 ): RecipeTag[] => {
-  const books = response.map((recipe) => {
+  const recipes = response.map((recipe) => {
     return {
       id: recipe.id,
       title: recipe.properties.title?.title[0].plain_text,
+      relatedRecipes: recipe.properties.related_recipes.relation,
     };
   });
-  return books;
+  return recipes;
 };
 
 const getAllRecipeTags = async (): Promise<RecipeTag[]> => {
