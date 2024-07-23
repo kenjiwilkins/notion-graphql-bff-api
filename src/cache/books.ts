@@ -48,7 +48,7 @@ const getAllBooks = async (): Promise<Book[]> => {
       books = [...books, ...newBooks];
       hasMore = has_more;
       nextCursor = next_cursor || "";
-    } while (hasMore && count < 2);
+    } while (hasMore && count < 3);
     return Promise.resolve(books);
   } catch (error) {
     return Promise.reject(error);
@@ -86,4 +86,11 @@ export function getBooksCacheUpdatedAt(): Date | null {
 
 export function clearBooksCache(): void {
   cache = null;
+}
+
+export function getReadingBooks(): Book[] {
+  if (!cache) {
+    return [];
+  }
+  return cache.Books.filter((book) => book.status === "reading");
 }

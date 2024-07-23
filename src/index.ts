@@ -1,54 +1,75 @@
 import "dotenv/config";
-
 import { ApolloServer, gql } from "apollo-server";
-import { getRecipeTags } from "./apis";
-import sessions from "./sessions.json";
-import { getBooksFromCache, getRecipeTagsFromCache } from "./cache";
+import {
+  getBooksFromCache,
+  getRecipeTagsFromCache,
+  getReadingBooks,
+} from "./cache";
+import { GraphQLScalarType, Kind } from "graphql";
 
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const ratingScalar = new GraphQLScalarType({
+  name: "Rating",
+  description: "Rating custom scalar type for values between 0 and 5",
+  serialize(value) {
+    return value;
+  },
+  parseValue(value) {
+    return validateRating(parseInt(value as string));
+  },
+  parseLiteral(ast) {
+    if (ast.kind === Kind.INT) {
+      return validateRating(parseInt(ast.value, 10));
+    }
+    return null;
+  },
+});
+
+function validateRating(value: number) {
+  if (value < 0 || value > 5) {
+    throw new Error("Rating must be between 0 and 5");
+  }
+  return value;
+}
+
 const typeDefs = gql`
-  enum BookReadStatus {
-    Reading
-    Read
+  scalar Rating
+  enum Status {
+    read
+    reading
     unread
   }
   type Query {
-    sessions: [Session]
     hello: String
     wait(ms: Int!): String
-    book: [Book]
+    book: BookResult
+    readingBooks: BookResult
     recipeTags: [RecipeTag]
     recipeTagByTitle(title: String!): RecipeTagsOrError
     bookById(id: ID!): BookOrError
   }
-  type Session {
-    id: ID!
-    title: String!
-    description: String
-    startsAt: String
-    endsAt: String
-    room: String
-    day: String
-    format: String
-    track: String
-      @deprecated(
-        reason: "Too many sessions do not fit into a single track, consider using tags"
-      )
-    level: String
+  type BookResult {
+    totalCount: Int!
+    books: [Book]
   }
   type Book {
     id: ID!
     title: String!
-    status: BookReadStatus
+    status: Status
+    rate: Rating
     authorName: String
     authorId: String
   }
   type RecipeTag {
     id: ID!
     title: String!
+    relatedRecipes: [RecipeRelation]
+  }
+  type RecipeRelation {
+    id: ID!
   }
   type Error {
     message: String!
@@ -60,13 +81,11 @@ const typeDefs = gql`
 
 // A map of functions which return data for the schema.
 const resolvers = {
+  Rating: ratingScalar,
   Query: {
     hello: async () => {
       const now = new Date();
       return `Hello world! at ${now.toLocaleDateString()}: ${now.toLocaleTimeString()}`;
-    },
-    sessions: () => {
-      return sessions;
     },
     wait: async (_: any, { ms }: { ms: number }) => {
       const now = new Date();
@@ -88,10 +107,20 @@ const resolvers = {
     book: async () => {
       try {
         const books = await getBooksFromCache();
-        return books;
+        return {
+          totalCount: books.length,
+          books: books,
+        };
       } catch (error) {
         console.error(error);
       }
+    },
+    readingBooks: async () => {
+      const books = getReadingBooks();
+      return {
+        totalCount: books.length,
+        books: books,
+      };
     },
     bookById: async (_: any, { id }: { id: string }) => {
       try {
@@ -139,3 +168,5 @@ const server = new ApolloServer({ typeDefs, resolvers });
 server.listen().then(({ url }) => {
   console.log(`🚀 Server ready at ${url}`);
 });
+
+getBooksFromCache();
