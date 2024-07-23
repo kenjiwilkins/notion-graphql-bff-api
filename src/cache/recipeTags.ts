@@ -19,7 +19,7 @@ const formatRecipeTagsResponse = (
     return {
       id: recipe.id,
       title: recipe.properties.title?.title[0].plain_text,
-      relatedRecipes: recipe.properties.related_recipes.relation,
+      relatedRecipes: recipe.properties.related_recipes.relation || [],
     };
   });
   return recipes;

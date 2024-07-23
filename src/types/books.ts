@@ -1,5 +1,5 @@
 export type BookReadStatus = "read" | "reading" | "unread";
-export type BookRate = 1 | 2 | 3 | 4 | 5 | "TBD" | null;
+export type BookRate = "1" | "2" | "3" | "4" | "5" | null;
 
 export interface Book {
   id: string;
@@ -25,7 +25,9 @@ export interface AuthorRollupName {
 
 export interface BookResponseProperties {
   Rate: {
-    select: BookRate;
+    select?: {
+      name: BookRate;
+    };
   };
   Status: {
     status: {

@@ -1,4 +1,4 @@
-import { BookshelfResponse, type Book } from "../types";
+import { BookRate, BookshelfResponse, type Book } from "../types";
 import { getBooks, type BookResponse } from "../apis";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -16,7 +16,9 @@ const formatBookResponse = (response: BookshelfResponse): Book[] => {
   const books = response.map((book) => {
     return {
       id: book.id,
-      rate: book.properties.Rate.select,
+      rate: book.properties.Rate.select
+        ? book.properties.Rate.select.name
+        : null,
       status: book.properties.Status.status.name,
       reading: book.properties.Reading.rich_text[0].plain_text,
       dateRead: "none",
