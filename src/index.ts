@@ -3,9 +3,10 @@ import { ApolloServer, gql } from "apollo-server";
 import {
   getBooksFromCache,
   getRecipeTagsFromCache,
-  getReadingBooks,
+  getBooksByStatus,
 } from "./cache";
 import { GraphQLScalarType, Kind } from "graphql";
+import { BookReadStatus } from "./types";
 
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -46,7 +47,7 @@ const typeDefs = gql`
     hello: String
     wait(ms: Int!): String
     book: BookResult
-    readingBooks: BookResult
+    bookByStatus(status: Status): BookResult
     recipeTags: [RecipeTag]
     recipeTagByTitle(title: String!): RecipeTagsOrError
     bookById(id: ID!): BookOrError
@@ -115,8 +116,8 @@ const resolvers = {
         console.error(error);
       }
     },
-    readingBooks: async () => {
-      const books = getReadingBooks();
+    bookByStatus: async (_: any, { status }: { status: BookReadStatus }) => {
+      const books = await getBooksByStatus(status);
       return {
         totalCount: books.length,
         books: books,

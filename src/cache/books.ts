@@ -1,4 +1,9 @@
-import { BookRate, BookshelfResponse, type Book } from "../types";
+import {
+  BookRate,
+  BookReadStatus,
+  BookshelfResponse,
+  type Book,
+} from "../types";
 import { getBooks, type BookResponse } from "../apis";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -88,9 +93,12 @@ export function clearBooksCache(): void {
   cache = null;
 }
 
-export function getReadingBooks(): Book[] {
+export async function getBooksByStatus(
+  status: BookReadStatus
+): Promise<Book[]> {
   if (!cache) {
-    return [];
+    await getBooksFromCache();
+    return await getBooksByStatus(status);
   }
-  return cache.Books.filter((book) => book.status === "reading");
+  return cache.Books.filter((book) => book.status === status);
 }
